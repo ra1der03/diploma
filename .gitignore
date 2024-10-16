@@ -1,0 +1,5 @@
+.env
+requirements.txt
+/.idea/
+.gitignire
+/static/
