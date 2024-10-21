@@ -1,5 +1,7 @@
 .env
 requirements.txt
 /.idea/
-.gitignire
+.gitignore
 /static/
+/app/__pycache__
+/app/.pytest_cache

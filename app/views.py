@@ -111,7 +111,7 @@ class LoginAccount(APIView):
                     return JsonResponse({'Status': True, 'Token': token.key})
             return JsonResponse({'Status':  False, 'Error': 'Authentication failed'})
 
-        return JsonResponse({'Status': False, 'Error': 'All fields required'})
+        return JsonResponse({'Status': False, 'Error': 'All fields required', "Got": request})
 
 
 class CategoryView(ListAPIView):
