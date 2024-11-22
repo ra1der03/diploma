@@ -109,7 +109,7 @@ class Category(models.Model):
 
 class Product(models.Model):
     objects = models.manager.Manager()
-    name = models.CharField(verbose_name='Название', max_length=30)
+    name = models.CharField(verbose_name='Название', max_length=100)
     category = models.ForeignKey(Category, verbose_name='Категория', related_name='products', blank=True,
                                  on_delete=models.CASCADE)
 
@@ -132,7 +132,7 @@ class ProductInfo(models.Model):
                              on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(verbose_name='Количество')
     price = models.PositiveIntegerField(verbose_name='Цена')
-    rrc_price = models.PositiveIntegerField(verbose_name='Рекомендуемая розничная цена')
+    price_rrc = models.PositiveIntegerField(verbose_name='Рекомендуемая розничная цена')
 
     class Meta:
         verbose_name = 'Информация о продуктах'
@@ -257,8 +257,3 @@ class ConfirmEmailToken(models.Model):
 
     def __str__(self):
         return f"Password reset token for user {self.user}"
-
-
-
-
-

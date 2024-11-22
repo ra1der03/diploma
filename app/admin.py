@@ -45,8 +45,8 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(ProductInfo)
 class ProductInfoAdmin(admin.ModelAdmin):
-    list_display = ['model', 'product', 'shop', 'quantity', 'price', 'rrc_price']
-    list_filter = ['model', 'product', 'shop', 'quantity', 'price', 'rrc_price']
+    list_display = ['model', 'product', 'shop', 'quantity', 'price', 'price_rrc']
+    list_filter = ['model', 'product', 'shop', 'quantity', 'price', 'price_rrc']
 
 
 @admin.register(Product)

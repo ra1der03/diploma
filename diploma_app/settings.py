@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'django_rest_passwordreset',
     'app',
     'rest_framework',
+    'rest_framework.authtoken',
     'django_filters',
 
 ]
@@ -68,6 +69,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "diploma_app.wsgi.application"
 REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+
+    ),
+
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+
+        'rest_framework.authentication.TokenAuthentication',
+    ),
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
     ],

@@ -25,7 +25,7 @@ from app.signals import new_order
 class RegisterAccount(APIView):
 
     def post(self, request, *args, **kwargs):
-        if {'first_name', 'last_name', 'email', 'company', 'position', 'contacts'}.issubset(request.data):
+        if {'first_name', 'last_name', 'email', 'company', 'position'}.issubset(request.data):
             try:
                 validate_password(request.data['password'])
             except Exception as password_error:
@@ -68,14 +68,14 @@ class AccountDetails(APIView):
 
     def get(self, request: Request, *args, **kwargs):
 
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             return JsonResponse({'Status': False, 'error': 'Log in required'}, status=403)
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
 
     def post(self, request: Request, *args, **kwargs):
 
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             return JsonResponse({'Status': False, 'error': 'Log in required'}, status=403)
 
         if 'password' in request.data:
@@ -138,7 +138,7 @@ class ProductInfoView(APIView):
             query = query & Q(product__category_id=category_id)
 
         queryset = ProductInfo.objects.filter(query).select_related('shop', 'product__category').prefetch_related(
-                                            'product_parameters__parameter').dictinct()
+                                            'product_parameters__parameter').distinct()
         serializer = ProductInfoSerializer(queryset, many=True)
         return Response(serializer.data)
 
@@ -162,7 +162,7 @@ class BasketView(APIView):
         if not request.user.is_authenticated:
             return JsonResponse({'Status': False, 'Error': 'Log in required'}, status=403)
 
-        items_sting = request.data.get['items']
+        items_sting = request.data['items']
         if items_sting:
             try:
                 items_dict = load_json(items_sting)
@@ -221,8 +221,8 @@ class BasketView(APIView):
                 basket, _ = Order.objects.get_or_create(user_id=request.user.id, state='basket')
             objects_updated = 0
             for order_item in items_dict:
-                if type(order_item['quantity']) == int and type(order_item['id']) == int:
-                    objects_updated += Order.objects.filter(order_id=basket.id, id=order_item['id']).update(
+                if type(order_item['quantity']) == int and type(order_item['product_info']) == int:
+                    objects_updated += OrderItem.objects.filter(order_id=basket.id, id=order_item['product_info']).update(
                         quantity=order_item['quantity'])
             return JsonResponse({'Status': True, 'Updated objects:': objects_updated})
 
@@ -250,17 +250,17 @@ class PartnerUpdate(APIView):
                 data = load_yaml(stream, Loader=Loader)
                 shop, _ = Shop.objects.get_or_create(name=data['shop'], user_id=request.user.id)
                 for category in data['categories']:
-                    category_object = Category.objects.get_or_create(id=category['id'], name=category['name'])
+                    category_object, _ = Category.objects.get_or_create(id=category['id'], name=category['name'])
                     category_object.shops.add(shop.id)
                     category_object.save()
                 ProductInfo.objects.filter(shop_id=shop.id).delete()
                 for item in data['goods']:
                     product, _ = Product.objects.get_or_create(name=item['name'], category_id=item['category'])
-                    product_info = ProductInfo.objects.create(product_id=product.id, external_id=item.id,
-                                                              model=item.model, shop_id=shop.id, quantity=item.quantity,
-                                                              price=item.price, rrc_price=item.rrc_price)
+                    product_info = ProductInfo.objects.create(product_id=product.id, external_id=item['id'],
+                                                              model=item['model'], quantity=item['quantity'],
+                                                              price=item['price'], price_rrc=item['price_rrc'], shop_id=shop.id)
                     for name, value in item['parameters'].items():
-                        parameter_object = Parameter.objects.get_or_create(name=name)
+                        parameter_object, _ = Parameter.objects.get_or_create(name=name)
                         ProductParameter.objects.create(product_info_id=product_info.id,
                                                         parameter_id=parameter_object.id, value=value)
                 return JsonResponse({'Status': True})
@@ -321,7 +321,7 @@ class ContactView(APIView):
         if not request.user.is_authenticated:
             return JsonResponse({'Status': False, 'Error': 'Log in required'}, status=403)
 
-        contact = Contact.objects.filters(user_id=request.user.id)
+        contact = Contact.objects.filter(user_id=request.user.id)
         serializer = ContactSerializer(contact, many=True)
         return Response(serializer.data)
 
@@ -330,9 +330,9 @@ class ContactView(APIView):
             return JsonResponse({'Status': False, 'Error': 'Log in required'}, status=403)
 
         if {'city', 'street', 'phone'}.issubset(request.data):
-            request.data._mutable = True
-            request.data.update({'user': request.user.id})
-            serializer = ContactSerializer(data=request.data)
+            data = request.data.copy()
+            data['user'] = request.user.id
+            serializer = ContactSerializer(data=data)
             if serializer.is_valid():
                 serializer.save()
                 return JsonResponse({'Status': True})
@@ -345,15 +345,18 @@ class ContactView(APIView):
             return JsonResponse({'Status': False, 'Error': 'Log in required'}, status=403)
 
         if 'id' in request.data:
-            if request.data['id'].isdigit():
-                contact = Contact.objects.filter(id=request.data['id'], user_id=request.user.id).first()
-                if contact:
-                    serializer = ContactSerializer(contact, data=request.data, partial=True)
-                    if serializer.is_valid():
-                        serializer.save()
-                        return JsonResponse({'Status': True})
-                    else:
-                        return JsonResponse({'Status': False, 'Error': serializer.errors})
+            if not isinstance(request.data['id'], int) or request.data['id'] <= 0:
+                return JsonResponse({'Status': False, 'Error': "Invalid ID"})
+            if request.data['id'] != request.user.id:
+                return JsonResponse({'Status': False, 'Error': "Its allowed to change your own contacts only"})
+            contact = Contact.objects.filter(id=request.data['id'], user_id=request.user.id).first()
+            if contact:
+                serializer = ContactSerializer(contact, data=request.data, partial=True)
+                if serializer.is_valid():
+                    serializer.save()
+                    return JsonResponse({'Status': True})
+                else:
+                    return JsonResponse({'Status': False, 'Error': serializer.errors})
         return JsonResponse({'Status': False, 'Error': 'All fields required'})
 
     def delete(self, request, *args, **kwargs):
@@ -394,7 +397,7 @@ class OrderView(APIView):
             return JsonResponse({'Status': False, 'Error': 'Log in required'}, status=403)
 
         if {'id', 'contact'}.issubset(request.data):
-            if request.data['id'].is_digit():
+            if request.data['id'].isdigit():
                 try:
                     is_updated = Order.objects.filter(user_id=request.user.id, id=request.data['id']).update(
                         contact_id=request.data['contact'], state='new')

@@ -1,6 +1,6 @@
 .env
 /.idea/
-.gitignore
 /static/
 /app/__pycache__
 /app/.pytest_cache
+/.venv
