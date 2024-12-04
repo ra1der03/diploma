@@ -1,4 +1,5 @@
 from distutils.util import strtobool
+import json
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.core.validators import URLValidator
@@ -14,7 +15,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
 from selenium.webdriver.remote.utils import load_json
-
+from app.tasks import do_import_task
 from app.models import ConfirmEmailToken, Category, Shop, Order, OrderItem, Product, Parameter, \
     ProductParameter, Contact, ProductInfo
 from app.serializers import UserSerializer, CategorySerializer, ShopSerializer, ProductInfoSerializer, \
@@ -35,7 +36,7 @@ class RegisterAccount(APIView):
                 return JsonResponse({'Status': False, 'Errors': {'password': password_errors}})
 
             else:
-                user_serializer = UserSerializer(data=request.data)
+                user_serializer = UserSerializer(data=request.data, context={'user': request.user})
                 if user_serializer.is_valid():
                     user = user_serializer.save()
                     user.set_password(request.data['password'])
@@ -71,7 +72,7 @@ class AccountDetails(APIView):
         if not request.user.is_authenticated:
             return JsonResponse({'Status': False, 'error': 'Log in required'}, status=403)
         serializer = UserSerializer(request.user)
-        return Response(serializer.data)
+        return JsonResponse(serializer.data)
 
     def post(self, request: Request, *args, **kwargs):
 
@@ -246,25 +247,9 @@ class PartnerUpdate(APIView):
             except ValidationError as e:
                 return JsonResponse({'Status': False, 'Error': str(e)})
             else:
-                stream = get(url).content
-                data = load_yaml(stream, Loader=Loader)
-                shop, _ = Shop.objects.get_or_create(name=data['shop'], user_id=request.user.id)
-                for category in data['categories']:
-                    category_object, _ = Category.objects.get_or_create(id=category['id'], name=category['name'])
-                    category_object.shops.add(shop.id)
-                    category_object.save()
-                ProductInfo.objects.filter(shop_id=shop.id).delete()
-                for item in data['goods']:
-                    product, _ = Product.objects.get_or_create(name=item['name'], category_id=item['category'])
-                    product_info = ProductInfo.objects.create(product_id=product.id, external_id=item['id'],
-                                                              model=item['model'], quantity=item['quantity'],
-                                                              price=item['price'], price_rrc=item['price_rrc'], shop_id=shop.id)
-                    for name, value in item['parameters'].items():
-                        parameter_object, _ = Parameter.objects.get_or_create(name=name)
-                        ProductParameter.objects.create(product_info_id=product_info.id,
-                                                        parameter_id=parameter_object.id, value=value)
-                return JsonResponse({'Status': True})
-
+                user_id = request.user.id
+                do_import_task.delay(url, user_id)
+                return JsonResponse({'Status': True, 'Message': 'Import task done'})
         return JsonResponse({'Status': False, 'error': 'All fields required'})
 
 

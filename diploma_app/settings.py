@@ -33,8 +33,11 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'django_filters',
-
+    'celery',
 ]
+
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "diploma_app.settings")
 
 INTERNAL_IPS = ['127.0.0.1']
 
@@ -154,3 +157,14 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+# Celery settings
+
+CELERY_BROKER_URL = 'redis://redis:6379/0'
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+
+# Add this line at the end of the file
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True

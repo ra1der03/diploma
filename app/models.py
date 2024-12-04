@@ -72,6 +72,7 @@ class User(AbstractUser):
         return f'{self.first_name} {self.last_name}'
 
     class Meta:
+        app_label = 'app' 
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Список пользователей'
         ordering = ('email',)

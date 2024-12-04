@@ -5,3 +5,4 @@
 /app/.pytest_cache
 /.venv
 /__pycache__
+/app/__pycache__
