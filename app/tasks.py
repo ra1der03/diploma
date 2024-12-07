@@ -29,7 +29,7 @@ def new_user_task(email_, token_, set_):
 
 
 @shared_task
-def new_order_task(email_, token_, set_):
+def new_order_task(email_, set_):
     msg = EmailMultiAlternatives(
         "Обновление статуса заказа",
     "Заказ сформирован",

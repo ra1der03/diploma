@@ -204,7 +204,7 @@ class Order(models.Model):
         ordering = ('-dt', )
 
     def __str__(self):
-        return self.dt
+        return str(self.dt)
 
 
 class OrderItem(models.Model):

@@ -27,7 +27,7 @@ class ShopAdmin(admin.ModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ['user', 'dt', 'state', 'contact']
+    list_display = ['user',  'state', 'contact']
     list_filter = ['user', 'dt', 'state', 'contact']
 
 

@@ -1,0 +1,20 @@
+Name                         Stmts   Miss  Cover
+------------------------------------------------
+app\__init__.py                  0      0   100%
+app\admin.py                    47      0   100%
+app\apps.py                      4      0   100%
+app\migrations\__init__.py       0      0   100%
+app\models.py                  164     30    82%
+app\serializers.py              57      0   100%
+app\signals.py                  31     14    55%
+app\tasks.py                    34     20    41%
+app\tests.py                   117      0   100%
+app\urls.py                      5      0   100%
+app\views.py                   292    234    20%
+diploma_app\__init__.py          2      0   100%
+diploma_app\celery.py            8      0   100%
+diploma_app\settings.py         41      0   100%
+diploma_app\urls.py              5      0   100%
+manage.py                       11      2    82%
+------------------------------------------------
+TOTAL                          818    300    63%

@@ -296,7 +296,7 @@ class PartnerOrders(APIView):
             state='basket').prefetch_related('ordered_items__product_info__product__category',
                                              'ordered_items__product_info__product_parameters__parameter')
                  .select_related('contact').annotate(total_sum=Sum(F('ordered_items__quantity') *
-                                                                   F('ordered_items__product_info__price'))).dictinct())
+                                                                   F('ordered_items__product_info__price'))).distinct())
         serializer = OrderSerializer(order, many=True)
         return Response(serializer.data)
 
@@ -369,12 +369,12 @@ class OrderView(APIView):
         if not request.user.is_authenticated:
             return JsonResponse({'Status': False, 'Error': 'Log in required'}, status=403)
 
-        order = not Order.objects.filter(user_id=request.user.id).exclude(state='basket').prefetch_related(
+        order = Order.objects.filter(user_id=request.user.id).exclude(state='basket').prefetch_related(
             'ordered_items__product_info__product__category',
             'ordered_items__product_info__product_parameters__parameter').select_related('contact').annotate(
             total_sum=Sum(F('ordered_items__product_info__price') *
                           F('ordered_items__quantity'))).distinct()
-        serializer = OrderSerializer(order)
+        serializer = OrderSerializer(order, many=True)
         return Response(serializer.data)
 
     def post(self, request, *args, **kwargs):
@@ -382,15 +382,30 @@ class OrderView(APIView):
             return JsonResponse({'Status': False, 'Error': 'Log in required'}, status=403)
 
         if {'id', 'contact'}.issubset(request.data):
-            if request.data['id'].isdigit():
-                try:
-                    is_updated = Order.objects.filter(user_id=request.user.id, id=request.data['id']).update(
-                        contact_id=request.data['contact'], state='new')
-                except IntegrityError as err:
-                    return JsonResponse({'Status': False, 'Error': 'Incorrect data format', 'Error desc': str(err)})
+            try:
+                contact_id = int(request.data['contact'])
+            except ValueError:
+                return JsonResponse({'Status': False, 'Error': 'Invalid contact ID'})
 
+            try:
+                order = Order.objects.filter(
+                        user_id=request.user.id, state='basket').first()
+                if order:
+                        # Update existing basket order
+                    order.contact_id = contact_id
+                    order.state = 'new'
+                    order.save()
                 else:
-                    if is_updated:
-                        new_order.send(sender=self.__class__, user_id=request.user.id)
-                        return JsonResponse({'Status': True})
+                        # Create a new order if no basket exists
+                    order = Order.objects.create(
+                        user_id=request.user.id,
+                        contact_id=contact_id,
+                        state='new'
+                        )
+                new_order(sender=self.__class__, user_id=request.user.id)
+                return JsonResponse({'Status': True})
+
+            except IntegrityError as err:
+                return JsonResponse({'Status': False, 'Error': 'Incorrect data format', 'Error desc': str(err)})
+
         return JsonResponse({'Status': False, 'Error': 'All fields required'})
