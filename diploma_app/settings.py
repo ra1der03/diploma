@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'django_filters',
     'celery',
+    'drf_spectacular',
 ]
 
 
@@ -72,12 +73,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "diploma_app.wsgi.application"
 REST_FRAMEWORK = {
+    # SPECTACULAR_drf_schema
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
 
     ),
-
     'DEFAULT_AUTHENTICATION_CLASSES': (
 
         'rest_framework.authentication.TokenAuthentication',
@@ -89,6 +91,13 @@ REST_FRAMEWORK = {
     'ORDERING_PARAM': 'o',
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 3
+}
+# SPECTACULAR_SETTINGS 
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'API Documentation',
+    'DESCRIPTION': 'API Documentation for Diploma project',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
 }
 
 # Database
