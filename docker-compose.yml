@@ -10,8 +10,7 @@ services:
     networks:
     - net1
   celery:
-    build:
-      context: ./app
+    build: .
     entrypoint: celery
     command: -A diploma_app.celery worker --loglevel=info
     environment:
@@ -25,7 +24,7 @@ services:
     - redis
     depends_on:
     - redis
-    - web-v
+    - web-0
     networks:
     - net1
   db1:
@@ -52,8 +51,8 @@ services:
       - ./www:/www
     networks:
       - net1
-  web-v:
-    container_name: store-v4
+  web-0:
+    container_name: store-v00
     build: .
     ports:
       - "8000:8000"
@@ -64,13 +63,14 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_HOST: db1
+      VK_APP_ID: ${VK_APP_ID}
     restart: unless-stopped
     volumes:
       - .:/app
       - ./www:/www
     entrypoint: [ "bash", "-c", "python manage.py makemigrations
       && python manage.py migrate 
-      && python manage.py runserver 0.0.0.0:8000 
+      && python manage.py runsslserver 0.0.0.0:8000
       && manage.py collectstatic --noinput" ]
     networks:
       - net1

@@ -1,5 +1,4 @@
 from distutils.util import strtobool
-import json
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.core.validators import URLValidator
@@ -21,6 +20,7 @@ from app.models import ConfirmEmailToken, Category, Shop, Order, OrderItem, Prod
 from app.serializers import UserSerializer, CategorySerializer, ShopSerializer, ProductInfoSerializer, \
     OrderSerializer, OrderItemSerializer, ContactSerializer
 from app.signals import new_order
+from django.shortcuts import render
 
 
 class RegisterAccount(APIView):
@@ -102,6 +102,7 @@ class AccountDetails(APIView):
 
 class LoginAccount(APIView):
 
+    
     def post(self, request, *args, **kwargs):
 
         if {'password', 'email'}.issubset(request.data):

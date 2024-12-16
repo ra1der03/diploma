@@ -1,9 +1,8 @@
-from django.contrib import admin
 from django.urls import path, include
-from debug_toolbar.toolbar import debug_toolbar_urls
+from django.contrib import admin
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("api/v1/", include('app.urls', namespace='app')),
-] + debug_toolbar_urls()
-
+     path("admin/", admin.site.urls),
+     path("api/v1/", include('app.urls', namespace='app')),
+     path("social/", include('rest_framework_social_oauth2.urls', namespace='social'))
+ ]
