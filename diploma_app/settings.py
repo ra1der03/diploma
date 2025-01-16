@@ -8,7 +8,6 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
@@ -36,11 +35,15 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'django_filters',
     'celery',
+
+    # social auth apps
     'oauth2_provider',
-    # 'social_django',
+    'social_django',
+    'drf_social_oauth2',
+    'rest_framework_social_oauth2',
+
     'drf_spectacular',
     'sslserver',
-    'rest_framework_social_oauth2',
 ]
 
 
@@ -65,17 +68,20 @@ ROOT_URLCONF = "diploma_app.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [], 
+        "DIRS": [os.path.join(BASE_DIR, 'app/template')], 
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
-                'social_django.context_processors.backends',
-                'social_django.context_processors.login_redirect',
-                "django.template.context_processors.debug",
-                "django.template.context_processors.request",
-                "django.contrib.auth.context_processors.auth",
-                "django.contrib.messages.context_processors.messages",
-                "app.context_processors.vk_app_id",
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.template.context_processors.debug',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.media',
+                'django.template.context_processors.static',
+                'django.template.context_processors.tz',
+                'django.contrib.messages.context_processors.messages',
+		"social_django.context_processors.backends",
+   	        "social_django.context_processors.login_redirect",
             ],
         },
     },
@@ -101,8 +107,8 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
-        'rest_framework_social_oauth2.authentication.SocialAuthentication',
         'rest_framework.authentication.TokenAuthentication',
+        'drf_social_oauth2.authentication.SocialAuthentication',
     ),
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
@@ -138,48 +144,35 @@ AUTHENTICATION_BACKENDS = (
     'social_core.backends.open_id.OpenIdAuth',
     'django.contrib.auth.backends.ModelBackend',
     'social_core.backends.vk.VKOAuth2',
-    'rest_framework_social_oauth2.backends.DjangoOAuth2',
-	'django.contrib.auth.backends.ModelBackend',
+    'drf_social_oauth2.backends.DjangoOAuth2',
 )
+
 
 # VK configuration
 CSRF_TRUSTED_ORIGINS=['https://127.0.0.1:8000']
-SOCIAL_AUTH_VK_KEY =  os.getenv('vk_app_id')
-SOCIAL_AUTH_VK_SECRET =  os.getenv('vk_secret_key')
-SOCIAL_AUTH_VK_SCOPE = ['email']
-# Link for getting access token:
-# https://oauth.vk.com/authorize/?client_id=9999999&response_type=token
-DRFSO2_URL_NAMESPACE = 'social'
+SOCIAL_AUTH_VK_OAUTH2_KEY =  os.getenv('vk_app_id')
+SOCIAL_AUTH_VK_OAUTH2_SECRET =  os.getenv('vk_secret_key')
+SOCIAL_AUTH_VK_OAUTH2_SCOPE = ['email']
+SOCIAL_AUTH_VK_OAUTH2_EXTRA_DATA = ['id', 'email']
+LOGIN_REDIRECT_URL = 'https://localhost/auth_complete/'
 
-
+SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
+SOCIAL_AUTH_ALLOWED_REDIRECT_HOSTS = ["localhost", "127.0.0.1"]
 SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.social_details',
     'social_core.pipeline.social_auth.social_uid',
     'social_core.pipeline.social_auth.auth_allowed',
     'social_core.pipeline.social_auth.social_user',
     'social_core.pipeline.user.get_username',
-    'social_core.pipeline.user.create_user',
     'social_core.pipeline.social_auth.associate_user',
-    'social.pipeline.social_auth.associate_by_email',
+    'social_core.pipeline.social_auth.associate_by_email',
     'social_core.pipeline.social_auth.load_extra_data',
     'social_core.pipeline.user.user_details',
-    'diploma_app.settings.create_user_token', 
-)
+ )
 
 SOCIAL_AUTH_JSONFIELD_ENABLED = True
 SOCIAL_AUTH_POSTGRES_JSONFIELD = True
 
-TEMPLATE_CONTEXT_PROCESSORS = (
-    "django.contrib.auth.context_processors.auth",
-    "django.core.context_processors.debug",
-    "django.core.context_processors.i18n",
-    "django.core.context_processors.media",
-    "django.core.context_processors.static",
-    "django.contrib.messages.context_processors.messages",
-    "social_core.context_processors.backends",
-    "social_core.context_processors.login_redirect",
-    "social_core.context_processors.request",
-) 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
@@ -232,8 +225,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Celery settings
 
-CELERY_BROKER_URL = 'redis://redis:6379/0'
-CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'

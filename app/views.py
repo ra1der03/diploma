@@ -21,6 +21,7 @@ from app.serializers import UserSerializer, CategorySerializer, ShopSerializer, 
     OrderSerializer, OrderItemSerializer, ContactSerializer
 from app.signals import new_order
 from django.shortcuts import render
+from django.contrib.auth import logout
 
 
 class RegisterAccount(APIView):
@@ -53,7 +54,6 @@ class ConfirmAccount(APIView):
     def post(self, request, *args, **kwargs):
         if {'email', 'token'}.issubset(request.data):
             token = ConfirmEmailToken.objects.filter(user__email=request.data['email'], key=request.data['token']).first()
-            print(token)
             if token:
                 token.user.is_active = True
                 token.user.save()
@@ -410,3 +410,15 @@ class OrderView(APIView):
                 return JsonResponse({'Status': False, 'Error': 'Incorrect data format', 'Error desc': str(err)})
 
         return JsonResponse({'Status': False, 'Error': 'All fields required'})
+
+class do_auth(APIView):
+     def get(self, request, *args, **kwargs):
+     	context = {}
+     	template = 'auth.html'
+     	return render(request, template, context)
+
+
+class log_out(APIView):
+     def get(self, request, *args, **kwargs):
+     	logout(request)
+     	return redirect('/') 
